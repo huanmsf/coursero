@@ -1,40 +1,62 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import router from '../router'
+import { useUserStore } from '../store/user'
 
-const request = axios.create({
-  baseURL: '/api',
-  timeout: 5000
+// 创建 axios 实例
+const service = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  timeout: 15000
 })
 
 // 请求拦截器
-request.interceptors.request.use(
+service.interceptors.request.use(
   config => {
-    // 从 localStorage 获取 token
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    const userStore = useUserStore()
+    if (userStore.token) {
+      config.headers['Authorization'] = `Bearer ${userStore.token}`
     }
     return config
   },
   error => {
+    console.error('请求错误:', error)
     return Promise.reject(error)
   }
 )
 
 // 响应拦截器
-request.interceptors.response.use(
+service.interceptors.response.use(
   response => {
     const res = response.data
-    if (res.code !== 0) {
-      ElMessage.error(res.message || '请求失败')
+
+    // 如果返回的状态码不是 200，说明接口请求有误
+    if (res.code !== 200) {
+      ElMessage({
+        message: res.message || '请求失败',
+        type: 'error',
+        duration: 5 * 1000
+      })
+
+      // 401: 未登录或 token 过期
+      if (res.code === 401) {
+        const userStore = useUserStore()
+        userStore.logoutAction()
+        router.push('/login')
+      }
       return Promise.reject(new Error(res.message || '请求失败'))
+    } else {
+      return res
     }
-    return res
   },
   error => {
-    ElMessage.error(error.message || '请求失败')
+    console.error('响应错误:', error)
+    ElMessage({
+      message: error.message || '请求失败',
+      type: 'error',
+      duration: 5 * 1000
+    })
     return Promise.reject(error)
   }
 )
 
-export default request 
+export default service 

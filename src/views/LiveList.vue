@@ -1,8 +1,8 @@
 <template>
   <div class="live-list">
-    <div class="live-header">
+    <div class="filters">
       <h1>直播课程</h1>
-      <div class="live-filters">
+      <div class="filter-group">
         <el-select v-model="filter.status" placeholder="直播状态">
           <el-option label="全部" value="" />
           <el-option label="即将开始" value="upcoming" />
@@ -28,18 +28,23 @@
         class="live-card"
         @click="handleLiveClick(live)"
       >
-        <div class="live-cover">
-          <img :src="live.cover" :alt="live.title" />
-          <div class="live-status" :class="live.status">
+        <div class="cover">
+          <img 
+            :src="live.cover" 
+            :alt="live.title"
+            @error="handleImageError"
+            loading="lazy"
+          />
+          <div class="status" :class="live.status">
             {{ getStatusText(live.status) }}
           </div>
-          <div class="live-countdown" v-if="live.status === 'upcoming'">
+          <div class="countdown" v-if="live.status === 'upcoming'">
             {{ formatCountdown(live.startTime) }}
           </div>
         </div>
-        <div class="live-info">
-          <h3>{{ live.title }}</h3>
-          <div class="live-meta">
+        <div class="content">
+          <h3 class="title">{{ live.title }}</h3>
+          <div class="info">
             <span class="teacher">
               <el-icon><User /></el-icon>
               {{ live.teacher }}
@@ -49,7 +54,7 @@
               {{ live.students }}人报名
             </span>
           </div>
-          <div class="live-price">
+          <div class="price-info">
             <span class="price">¥{{ live.price }}</span>
             <el-button
               type="primary"
@@ -88,7 +93,12 @@ import { getLiveList, registerLive } from '../api/live'
 const router = useRouter()
 
 const lives = ref([])
-const categories = ref([])
+const categories = ref([
+  { id: 1, name: '前端开发' },
+  { id: 2, name: '后端开发' },
+  { id: 3, name: '移动开发' },
+  { id: 4, name: '人工智能' }
+])
 const currentPage = ref(1)
 const pageSize = ref(12)
 const total = ref(0)
@@ -143,6 +153,10 @@ const formatCountdown = (startTime) => {
   return `${days}天${hours}时${minutes}分${seconds}秒`
 }
 
+const handleImageError = (e) => {
+  e.target.src = 'https://picsum.photos/800/450?random=' + Math.random()
+}
+
 const loadLives = async () => {
   try {
     const { data } = await getLiveList({
@@ -150,9 +164,14 @@ const loadLives = async () => {
       pageSize: pageSize.value,
       ...filter.value
     })
-    lives.value = data.list
-    total.value = data.total
+    if (data && data.list) {
+      lives.value = data.list
+      total.value = data.total
+    } else {
+      ElMessage.warning('暂无直播数据')
+    }
   } catch (error) {
+    console.error('获取直播列表失败:', error)
     ElMessage.error('获取直播列表失败')
   }
 }
@@ -188,33 +207,34 @@ onMounted(() => {
 
 <style scoped>
 .live-list {
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
 }
 
-.live-header {
+.filters {
+  margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
 }
 
-.live-header h1 {
-  font-size: 32px;
+.filters h1 {
+  font-size: 24px;
   color: #303133;
+  margin: 0;
 }
 
-.live-filters {
+.filter-group {
   display: flex;
   gap: 16px;
 }
 
 .live-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .live-card {
@@ -222,101 +242,121 @@ onMounted(() => {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
   cursor: pointer;
-  transition: transform 0.3s;
 }
 
 .live-card:hover {
   transform: translateY(-5px);
 }
 
-.live-cover {
+.cover {
   position: relative;
-  padding-top: 56.25%;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
 }
 
-.live-cover img {
-  position: absolute;
-  top: 0;
-  left: 0;
+.cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-.live-status {
+.live-card:hover .cover img {
+  transform: scale(1.05);
+}
+
+.status {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   color: #fff;
 }
 
-.live-status.upcoming {
-  background: #409EFF;
+.status.live {
+  background-color: #f56c6c;
 }
 
-.live-status.live {
-  background: #67C23A;
+.status.upcoming {
+  background-color: #409eff;
 }
 
-.live-status.ended {
-  background: #909399;
+.status.ended {
+  background-color: #909399;
 }
 
-.live-countdown {
+.countdown {
   position: absolute;
-  bottom: 12px;
-  left: 12px;
-  right: 12px;
-  padding: 8px;
+  bottom: 10px;
+  left: 10px;
+  padding: 4px 8px;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 4px;
+  font-size: 12px;
   color: #fff;
-  font-size: 14px;
-  text-align: center;
 }
 
-.live-info {
-  padding: 16px;
+.content {
+  padding: 15px;
 }
 
-.live-info h3 {
+.title {
   font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
   color: #303133;
-  margin-bottom: 12px;
   line-height: 1.4;
 }
 
-.live-meta {
+.info {
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  align-items: center;
   color: #606266;
   font-size: 14px;
+  margin-bottom: 10px;
 }
 
-.live-meta .el-icon {
-  margin-right: 4px;
+.teacher {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.live-price {
+.students {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.price-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.live-price .price {
-  font-size: 20px;
-  color: #F56C6C;
+.price {
+  color: #f56c6c;
   font-weight: bold;
+  font-size: 18px;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: 20px;
+}
+
+:deep(.el-select) {
+  width: 120px;
+}
+
+:deep(.el-button) {
+  padding: 8px 16px;
 }
 </style> 

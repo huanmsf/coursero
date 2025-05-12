@@ -1,127 +1,111 @@
 <template>
   <div class="home">
-    <el-container>
-      <el-header>
-        <div class="header-content">
-          <h1>在线教育平台</h1>
-          <el-menu mode="horizontal" :router="true" class="nav-menu">
-            <el-menu-item index="/">首页</el-menu-item>
-            <el-menu-item index="/courses">课程列表</el-menu-item>
-            <el-menu-item index="/live">直播列表</el-menu-item>
-            <el-menu-item index="/vip">VIP会员</el-menu-item>
-          </el-menu>
-        </div>
-      </el-header>
-
-      <el-main>
-        <div class="page-content">
-          <div class="banner">
-            <el-carousel height="400px">
-              <el-carousel-item v-for="item in banners" :key="item.id">
-                <img :src="item.image" :alt="item.title" class="banner-image">
-                <div class="banner-content">
-                  <h2>{{ item.title }}</h2>
-                  <p>{{ item.description }}</p>
-                </div>
-              </el-carousel-item>
-            </el-carousel>
-          </div>
-
-          <div class="section">
-            <div class="section-header">
-              <h2>热门课程</h2>
-              <el-button type="primary" link @click="router.push('/courses')">
-                查看更多
-                <el-icon><ArrowRight /></el-icon>
-              </el-button>
+    <div class="page-content">
+      <div class="banner">
+        <el-carousel height="400px">
+          <el-carousel-item v-for="item in banners" :key="item.id">
+            <img :src="item.image" :alt="item.title" class="banner-image">
+            <div class="banner-content">
+              <h2>{{ item.title }}</h2>
+              <p>{{ item.description }}</p>
             </div>
-            <div class="course-grid">
-              <div
-                v-for="course in hotCourses"
-                :key="course.id"
-                class="course-card"
-                @click="router.push(`/course/${course.id}`)"
-              >
-                <div class="course-cover">
-                  <img :src="course.cover" :alt="course.title">
-                  <div class="course-status" :class="course.status">
-                    {{ getStatusText(course.status) }}
-                  </div>
-                </div>
-                <div class="course-info">
-                  <h3>{{ course.title }}</h3>
-                  <div class="course-meta">
-                    <span class="teacher">
-                      <el-icon><User /></el-icon>
-                      {{ course.teacher }}
-                    </span>
-                    <span class="students">
-                      <el-icon><UserFilled /></el-icon>
-                      {{ course.students }}人学习
-                    </span>
-                  </div>
-                  <div class="course-price">
-                    <span class="price">¥{{ course.price }}</span>
-                    <el-button type="primary" size="small">立即报名</el-button>
-                  </div>
-                </div>
+          </el-carousel-item>
+        </el-carousel>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>热门课程</h2>
+          <el-button type="primary" link @click="router.push('/courses')">
+            查看更多
+            <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </div>
+        <div class="course-grid">
+          <div
+            v-for="course in hotCourses"
+            :key="course.id"
+            class="course-card"
+            @click="router.push(`/course/${course.id}`)"
+          >
+            <div class="course-cover">
+              <img :src="course.cover" :alt="course.title">
+              <div class="course-status" :class="course.status">
+                {{ getStatusText(course.status) }}
               </div>
             </div>
-          </div>
-
-          <div class="section">
-            <div class="section-header">
-              <h2>最新直播</h2>
-              <el-button type="primary" link @click="router.push('/live')">
-                查看更多
-                <el-icon><ArrowRight /></el-icon>
-              </el-button>
-            </div>
-            <div class="live-grid">
-              <div
-                v-for="live in latestLives"
-                :key="live.id"
-                class="live-card"
-                @click="router.push(`/live/${live.id}`)"
-              >
-                <div class="live-cover">
-                  <img :src="live.cover" :alt="live.title">
-                  <div class="live-status" :class="live.status">
-                    {{ getStatusText(live.status) }}
-                  </div>
-                  <div class="live-countdown" v-if="live.status === 'upcoming'">
-                    {{ formatCountdown(live.startTime) }}
-                  </div>
-                </div>
-                <div class="live-info">
-                  <h3>{{ live.title }}</h3>
-                  <div class="live-meta">
-                    <span class="teacher">
-                      <el-icon><User /></el-icon>
-                      {{ live.teacher }}
-                    </span>
-                    <span class="students">
-                      <el-icon><UserFilled /></el-icon>
-                      {{ live.students }}人报名
-                    </span>
-                  </div>
-                  <div class="live-price">
-                    <span class="price">¥{{ live.price }}</span>
-                    <el-button
-                      type="primary"
-                      size="small"
-                      :disabled="live.status === 'ended'"
-                    >
-                      {{ getActionText(live.status) }}
-                    </el-button>
-                  </div>
-                </div>
+            <div class="course-info">
+              <h3>{{ course.title }}</h3>
+              <div class="course-meta">
+                <span class="teacher">
+                  <el-icon><User /></el-icon>
+                  {{ course.teacher }}
+                </span>
+                <span class="students">
+                  <el-icon><UserFilled /></el-icon>
+                  {{ course.students }}人学习
+                </span>
+              </div>
+              <div class="course-price">
+                <span class="price">¥{{ course.price }}</span>
+                <el-button type="primary" size="small">立即报名</el-button>
               </div>
             </div>
           </div>
         </div>
-      </el-main>
-    </el-container>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>最新直播</h2>
+          <el-button type="primary" link @click="router.push('/live')">
+            查看更多
+            <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </div>
+        <div class="live-grid">
+          <div
+            v-for="live in latestLives"
+            :key="live.id"
+            class="live-card"
+            @click="router.push(`/live/${live.id}`)"
+          >
+            <div class="live-cover">
+              <img :src="live.cover" :alt="live.title">
+              <div class="live-status" :class="live.status">
+                {{ getStatusText(live.status) }}
+              </div>
+              <div class="live-countdown" v-if="live.status === 'upcoming'">
+                {{ formatCountdown(live.startTime) }}
+              </div>
+            </div>
+            <div class="live-info">
+              <h3>{{ live.title }}</h3>
+              <div class="live-meta">
+                <span class="teacher">
+                  <el-icon><User /></el-icon>
+                  {{ live.teacher }}
+                </span>
+                <span class="students">
+                  <el-icon><UserFilled /></el-icon>
+                  {{ live.students }}人报名
+                </span>
+              </div>
+              <div class="live-price">
+                <span class="price">¥{{ live.price }}</span>
+                <el-button
+                  type="primary"
+                  size="small"
+                  :disabled="live.status === 'ended'"
+                >
+                  {{ getActionText(live.status) }}
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

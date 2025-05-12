@@ -1,110 +1,94 @@
 <template>
   <div class="course-list">
-    <el-container>
-      <el-header>
-        <div class="header-content">
-          <h1>在线教育平台</h1>
-          <el-menu mode="horizontal" :router="true" class="nav-menu">
-            <el-menu-item index="/">首页</el-menu-item>
-            <el-menu-item index="/courses">课程列表</el-menu-item>
-            <el-menu-item index="/live">直播列表</el-menu-item>
-            <el-menu-item index="/vip">VIP会员</el-menu-item>
-          </el-menu>
-        </div>
-      </el-header>
-
-      <el-main>
-        <div class="page-content">
-          <div class="page-header">
-            <h1>课程列表</h1>
-            <div class="filters">
-              <el-select v-model="filters.category" placeholder="课程分类" clearable>
-                <el-option
-                  v-for="item in categories"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-              <el-select v-model="filters.level" placeholder="难度等级" clearable>
-                <el-option
-                  v-for="item in levels"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-              <el-select v-model="filters.sort" placeholder="排序方式">
-                <el-option label="最新" value="latest" />
-                <el-option label="最热" value="hot" />
-                <el-option label="价格从低到高" value="price_asc" />
-                <el-option label="价格从高到低" value="price_desc" />
-              </el-select>
-            </div>
-          </div>
-
-          <div class="course-grid">
-            <div
-              v-for="course in courses"
-              :key="course.id"
-              class="course-card"
-              @click="router.push(`/course/${course.id}`)"
-            >
-              <div class="course-cover">
-                <img :src="course.cover" :alt="course.title">
-                <div class="course-status" :class="course.status">
-                  {{ getStatusText(course.status) }}
-                </div>
-                <div class="course-duration" v-if="course.duration">
-                  <el-icon><Timer /></el-icon>
-                  {{ formatDuration(course.duration) }}
-                </div>
-              </div>
-              <div class="course-info">
-                <h3>{{ course.title }}</h3>
-                <p class="course-desc">{{ course.description }}</p>
-                <div class="course-meta">
-                  <span class="teacher">
-                    <el-icon><User /></el-icon>
-                    {{ course.teacher }}
-                  </span>
-                  <span class="students">
-                    <el-icon><UserFilled /></el-icon>
-                    {{ course.students }}人学习
-                  </span>
-                </div>
-                <div class="course-tags" v-if="course.tags && course.tags.length">
-                  <el-tag
-                    v-for="tag in course.tags"
-                    :key="tag"
-                    size="small"
-                    effect="plain"
-                  >
-                    {{ tag }}
-                  </el-tag>
-                </div>
-                <div class="course-price">
-                  <span class="price">¥{{ course.price }}</span>
-                  <el-button type="primary" size="small">立即报名</el-button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="pagination">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :total="total"
-              :page-sizes="[12, 24, 36, 48]"
-              layout="total, sizes, prev, pager, next"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
+    <div class="page-content">
+      <div class="page-header">
+        <h1>课程列表</h1>
+        <div class="filters">
+          <el-select v-model="filters.category" placeholder="课程分类" clearable>
+            <el-option
+              v-for="item in categories"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
             />
+          </el-select>
+          <el-select v-model="filters.level" placeholder="难度等级" clearable>
+            <el-option
+              v-for="item in levels"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+          <el-select v-model="filters.sort" placeholder="排序方式">
+            <el-option label="最新" value="latest" />
+            <el-option label="最热" value="hot" />
+            <el-option label="价格从低到高" value="price_asc" />
+            <el-option label="价格从高到低" value="price_desc" />
+          </el-select>
+        </div>
+      </div>
+
+      <div class="course-grid">
+        <div
+          v-for="course in courses"
+          :key="course.id"
+          class="course-card"
+          @click="router.push(`/course/${course.id}`)"
+        >
+          <div class="course-cover">
+            <img :src="course.cover" :alt="course.title">
+            <div class="course-status" :class="course.status">
+              {{ getStatusText(course.status) }}
+            </div>
+            <div class="course-duration" v-if="course.duration">
+              <el-icon><Timer /></el-icon>
+              {{ formatDuration(course.duration) }}
+            </div>
+          </div>
+          <div class="course-info">
+            <h3>{{ course.title }}</h3>
+            <p class="course-desc">{{ course.description }}</p>
+            <div class="course-meta">
+              <span class="teacher">
+                <el-icon><User /></el-icon>
+                {{ course.teacher }}
+              </span>
+              <span class="students">
+                <el-icon><UserFilled /></el-icon>
+                {{ course.students }}人学习
+              </span>
+            </div>
+            <div class="course-tags" v-if="course.tags && course.tags.length">
+              <el-tag
+                v-for="tag in course.tags"
+                :key="tag"
+                size="small"
+                effect="plain"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+            <div class="course-price">
+              <span class="price">¥{{ course.price }}</span>
+              <el-button type="primary" size="small">立即报名</el-button>
+            </div>
           </div>
         </div>
-      </el-main>
-    </el-container>
+      </div>
+
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[12, 24, 36, 48]"
+          layout="total, sizes, prev, pager, next"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
