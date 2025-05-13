@@ -112,35 +112,21 @@ export const getLivePushUrl = (id) => {
 
 // 获取直播拉流地址
 export const getLivePullUrl = (id) => {
-  const live = lives.find(l => l.id === parseInt(id))
-  if (live && live.streamUrl) {
-    return {
-      code: 200,
-      data: {
-        url: live.streamUrl
-      }
-    }
-  }
   return {
-    code: 404,
-    message: '拉流地址不存在'
+    code: 200,
+    data: {
+      url: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8'
+    }
   }
 }
 
 // 获取直播回放地址
 export const getLiveReplayUrl = (id) => {
-  const live = lives.find(l => l.id === parseInt(id))
-  if (live && live.status === 'ended' && live.streamUrl) {
-    return {
-      code: 200,
-      data: {
-        url: live.streamUrl
-      }
-    }
-  }
   return {
-    code: 404,
-    message: '回放不存在'
+    code: 200,
+    data: {
+      url: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8'
+    }
   }
 }
 
@@ -264,25 +250,24 @@ export const createLive = (data) => {
   }
 }
 
-// 获取直播流
-export const getLiveStream = (id) => {
-  const live = lives.find(l => l.id === parseInt(id))
-  if (live && live.status === 'live') {
+// 获取直播流地址
+export const getLiveStream = (liveId) => {
+  const live = lives.find(l => l.id === Number(liveId))
+  if (!live) {
     return {
-      code: 200,
-      data: {
-        stream: {
-          id: live.id,
-          title: live.title,
-          status: live.status,
-          streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
-        }
-      }
+      code: 404,
+      message: '直播不存在'
     }
   }
+
+  // 返回测试直播流地址
   return {
-    code: 404,
-    message: '直播流不存在'
+    code: 200,
+    data: {
+      stream: {
+        streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+      }
+    }
   }
 }
 
