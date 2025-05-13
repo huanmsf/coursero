@@ -25,6 +25,17 @@ const router = createRouter({
           component: () => import('../views/LiveList.vue')
         },
         {
+          path: 'live/push',
+          name: 'LivePush',
+          component: () => import('../views/LivePush.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'live/:id',
+          name: 'LiveWatch',
+          component: () => import('../views/LiveWatch.vue')
+        },
+        {
           path: 'teachers',
           name: 'Teachers',
           component: () => import('../views/TeacherList.vue')

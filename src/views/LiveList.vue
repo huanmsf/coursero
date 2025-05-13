@@ -1,22 +1,26 @@
 <template>
   <div class="live-list">
-    <div class="filters">
-      <h1>直播课程</h1>
-      <div class="filter-group">
-        <el-select v-model="filter.status" placeholder="直播状态">
+    <div class="page-content">
+      <div class="page-header">
+        <h1>直播列表</h1>
+        <el-button type="primary" @click="router.push('/live/push')">
+          <el-icon><VideoCamera /></el-icon>
+          开始直播
+        </el-button>
+      </div>
+      <div class="filters">
+        <el-select v-model="filters.status" placeholder="直播状态" clearable>
           <el-option label="全部" value="" />
           <el-option label="即将开始" value="upcoming" />
           <el-option label="直播中" value="live" />
           <el-option label="已结束" value="ended" />
         </el-select>
-        <el-select v-model="filter.category" placeholder="课程分类">
+        <el-select v-model="filters.category" placeholder="直播分类" clearable>
           <el-option label="全部" value="" />
-          <el-option
-            v-for="category in categories"
-            :key="category.id"
-            :label="category.name"
-            :value="category.id"
-          />
+          <el-option label="前端开发" value="frontend" />
+          <el-option label="后端开发" value="backend" />
+          <el-option label="移动开发" value="mobile" />
+          <el-option label="人工智能" value="ai" />
         </el-select>
       </div>
     </div>
@@ -87,7 +91,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, UserFilled } from '@element-plus/icons-vue'
+import { User, UserFilled, VideoCamera } from '@element-plus/icons-vue'
 import { getLiveList, registerLive } from '../api/live'
 
 const router = useRouter()
@@ -103,17 +107,17 @@ const currentPage = ref(1)
 const pageSize = ref(12)
 const total = ref(0)
 
-const filter = ref({
+const filters = ref({
   status: '',
   category: ''
 })
 
 const filteredLives = computed(() => {
   return lives.value.filter(live => {
-    if (filter.value.status && live.status !== filter.value.status) {
+    if (filters.value.status && live.status !== filters.value.status) {
       return false
     }
-    if (filter.value.category && live.categoryId !== filter.value.category) {
+    if (filters.value.category && live.categoryId !== filters.value.category) {
       return false
     }
     return true
@@ -162,7 +166,7 @@ const loadLives = async () => {
     const { data } = await getLiveList({
       page: currentPage.value,
       pageSize: pageSize.value,
-      ...filter.value
+      ...filters.value
     })
     if (data && data.list) {
       lives.value = data.list
@@ -210,6 +214,16 @@ onMounted(() => {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.page-content {
+  margin-bottom: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .filters {

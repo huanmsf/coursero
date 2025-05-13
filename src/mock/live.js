@@ -215,4 +215,105 @@ export const endLive = (id) => {
     code: 404,
     message: '直播不存在'
   }
+}
+
+// 创建直播
+export const createLive = (data) => {
+  // 找到第一个状态为 live 的直播
+  const existingLive = lives.find(live => live.status === 'live')
+  
+  if (existingLive) {
+    // 如果找到直播中的直播，直接返回
+    return {
+      code: 200,
+      data: {
+        ...existingLive,
+        title: data.title,
+        category: data.category === 'frontend' ? '前端开发' : 
+                 data.category === 'backend' ? '后端开发' :
+                 data.category === 'mobile' ? '移动开发' : '人工智能'
+      }
+    }
+  } else {
+    // 如果没有直播中的直播，创建一个新的
+    const newLive = {
+      id: lives.length + 1,
+      title: data.title,
+      description: data.description || '',
+      cover: `https://picsum.photos/800/450?random=${lives.length + 1}`,
+      teacher: '当前用户',
+      students: 0,
+      price: 0,
+      status: 'live',
+      startTime: new Date().toISOString(),
+      endTime: '',
+      categoryId: data.category,
+      category: data.category === 'frontend' ? '前端开发' : 
+                data.category === 'backend' ? '后端开发' :
+                data.category === 'mobile' ? '移动开发' : '人工智能',
+      streamUrl: 'https://example.com/live/stream1.m3u8',
+      pushUrl: `rtmp://example.com/live/stream${lives.length + 1}`
+    }
+    
+    lives.push(newLive)
+    
+    return {
+      code: 200,
+      data: newLive
+    }
+  }
+}
+
+// 获取直播流
+export const getLiveStream = (id) => {
+  const live = lives.find(l => l.id === parseInt(id))
+  if (live && live.status === 'live') {
+    return {
+      code: 200,
+      data: {
+        stream: {
+          id: live.id,
+          title: live.title,
+          status: live.status,
+          streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+        }
+      }
+    }
+  }
+  return {
+    code: 404,
+    message: '直播流不存在'
+  }
+}
+
+// 开始直播流
+export const startLiveStream = (id, data) => {
+  const live = lives.find(l => l.id === parseInt(id))
+  if (live) {
+    live.status = 'live'
+    live.streamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+    return {
+      code: 200,
+      data: {
+        stream: {
+          id: live.id,
+          title: live.title,
+          status: live.status,
+          streamUrl: live.streamUrl
+        }
+      }
+    }
+  }
+  return {
+    code: 404,
+    message: '直播不存在'
+  }
+}
+
+// 停止直播流
+export const stopLiveStream = () => {
+  return {
+    code: 200,
+    message: '直播流已停止'
+  }
 } 

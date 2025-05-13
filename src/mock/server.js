@@ -115,6 +115,12 @@ app.get('/api/lives/:id/messages', (req, res) => {
   res.json(result)
 })
 
+// 创建直播
+app.post('/api/lives', (req, res) => {
+  const result = liveMock.createLive(req.body)
+  res.json(result)
+})
+
 app.post('/api/lives/:id/start', (req, res) => {
   const result = liveMock.startLive(req.params.id)
   res.json(result)
@@ -122,6 +128,24 @@ app.post('/api/lives/:id/start', (req, res) => {
 
 app.post('/api/lives/:id/end', (req, res) => {
   const result = liveMock.endLive(req.params.id)
+  res.json(result)
+})
+
+// 开始直播流
+app.post('/api/lives/:id/stream', (req, res) => {
+  const result = liveMock.startLiveStream(req.params.id, req.body)
+  res.json(result)
+})
+
+// 获取直播流
+app.get('/api/lives/:id/stream', (req, res) => {
+  const result = liveMock.getLiveStream(req.params.id)
+  res.json(result)
+})
+
+// 停止直播流
+app.post('/api/lives/stream/stop', (req, res) => {
+  const result = liveMock.stopLiveStream()
   res.json(result)
 })
 

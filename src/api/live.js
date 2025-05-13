@@ -105,4 +105,40 @@ export function deleteLive(id) {
     url: `/lives/${id}`,
     method: 'delete'
   })
+}
+
+// 开始直播推流
+export function startLiveStream(data) {
+  return request({
+    url: `/lives/${data.id}/stream`,
+    method: 'post',
+    data: {
+      stream: data.stream
+    }
+  })
+}
+
+// 停止直播流
+export const stopLiveStream = () => {
+  return request({
+    url: '/lives/stream/stop',
+    method: 'post'
+  })
+}
+
+// 创建直播
+export const createLive = (data) => {
+  return request({
+    url: '/lives',
+    method: 'post',
+    data
+  })
+}
+
+// 获取直播流
+export function getLiveStream(id) {
+  return request({
+    url: `/lives/${id}/stream`,
+    method: 'get'
+  })
 } 
