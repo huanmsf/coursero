@@ -3,6 +3,7 @@ import cors from 'cors'
 import * as userMock from './user.js'
 import * as courseMock from './course.js'
 import * as liveMock from './live.js'
+import { chapters } from './course.js'
 
 const app = express()
 const port = 3000
@@ -77,6 +78,65 @@ app.get('/api/courses', (req, res) => {
 app.get('/api/courses/:id', (req, res) => {
   const result = courseMock.getCourseDetail(req.params.id)
   res.json(result)
+})
+
+app.get('/api/courses/:id/chapters', (req, res) => {
+  const result = courseMock.getCourseChapters(req.params.id)
+  res.json(result)
+})
+
+// 获取课程详情
+app.get('/api/lessons/:id', (req, res) => {
+  const { id } = req.params
+  const lesson = chapters.reduce((found, chapter) => {
+    if (found) return found
+    return chapter.lessons.find(lesson => lesson.id === parseInt(id))
+  }, null)
+
+  if (lesson) {
+    res.json({
+      code: 200,
+      data: {
+        ...lesson,
+        description: '这是课程描述',
+        viewCount: Math.floor(Math.random() * 1000)
+      }
+    })
+  } else {
+    res.status(404).json({
+      code: 404,
+      message: '课程不存在'
+    })
+  }
+})
+
+// 获取相关课程
+app.get('/api/lessons/:id/related', (req, res) => {
+  const { id } = req.params
+  const currentLesson = chapters.reduce((found, chapter) => {
+    if (found) return found
+    return chapter.lessons.find(lesson => lesson.id === parseInt(id))
+  }, null)
+
+  if (currentLesson) {
+    const currentChapter = chapters.find(chapter => 
+      chapter.lessons.some(lesson => lesson.id === parseInt(id))
+    )
+    
+    const relatedLessons = currentChapter.lessons
+      .filter(lesson => lesson.id !== parseInt(id))
+      .slice(0, 5)
+
+    res.json({
+      code: 200,
+      data: relatedLessons
+    })
+  } else {
+    res.status(404).json({
+      code: 404,
+      message: '课程不存在'
+    })
+  }
 })
 
 // 直播相关接口

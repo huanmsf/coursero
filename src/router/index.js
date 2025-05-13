@@ -20,6 +20,11 @@ const router = createRouter({
           component: () => import('../views/CourseList.vue')
         },
         {
+          path: 'course/:id',
+          name: 'CourseDetail',
+          component: () => import('../views/CourseDetail.vue')
+        },
+        {
           path: 'live',
           name: 'Live',
           component: () => import('../views/LiveList.vue')
@@ -57,6 +62,11 @@ const router = createRouter({
           name: 'UserFavorites',
           component: () => import('../views/UserFavorites.vue'),
           meta: { requiresAuth: true }
+        },
+        {
+          path: 'video/:id',
+          name: 'VideoPlayer',
+          component: () => import('../views/VideoPlayer.vue')
         }
       ]
     },

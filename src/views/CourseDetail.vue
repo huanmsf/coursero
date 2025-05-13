@@ -1,256 +1,393 @@
 <template>
   <div class="course-detail">
-    <!-- 课程信息 -->
     <div class="course-header">
       <div class="course-info">
         <h1>{{ course.title }}</h1>
-        <div class="meta">
-          <span class="teacher">{{ course.teacher }}</span>
-          <span class="students">{{ course.students }}人学习</span>
-          <span class="price">¥{{ course.price }}</span>
+        <div class="teacher-info">
+          <el-avatar :src="course.teacher?.avatar" />
+          <span>{{ course.teacher?.name }}</span>
         </div>
-        <div class="actions">
-          <el-button type="primary" @click="handleBuy" v-if="!isPurchased">立即购买</el-button>
-          <el-button type="success" @click="handleStudy" v-else>开始学习</el-button>
+        <div class="course-meta">
+          <el-tag>{{ course.category }}</el-tag>
+          <el-tag type="success">{{ course.level }}</el-tag>
+          <span class="students">{{ course.studentCount }} 学员</span>
+          <span class="rating">{{ course.rating }} 分</span>
         </div>
       </div>
-      <div class="course-cover">
-        <img :src="course.cover" :alt="course.title">
+      <div class="course-actions" v-if="isTeacher">
+        <el-button type="primary" @click="editCourse">编辑课程</el-button>
+        <el-button type="success" @click="createChapter">添加章节</el-button>
       </div>
     </div>
 
-    <!-- 课程内容 -->
     <div class="course-content">
-      <div class="video-player">
-        <VideoPlayer
-          v-if="currentLesson"
-          :src="currentLesson.videoUrl"
-          :poster="course.cover"
-          :is-vip="course.isVip"
-          :preview-time="course.previewTime || 300"
-          :token="userToken"
-          @timeupdate="handleTimeUpdate"
-          @buy-vip="handleBuyVip"
-        />
-        <div v-else class="no-lesson">
-          <el-empty description="请选择要学习的章节" />
-        </div>
-      </div>
-      <div class="lesson-list">
-        <div class="lesson-item"
-          v-for="lesson in lessons"
-          :key="lesson.id"
-          :class="{ active: currentLesson?.id === lesson.id }"
-          @click="playLesson(lesson)"
-        >
-          <div class="lesson-info">
-            <span class="lesson-title">{{ lesson.title }}</span>
-            <span class="lesson-duration">{{ formatDuration(lesson.duration) }}</span>
+      <div class="chapters">
+        <div v-for="chapter in chapters" :key="chapter.id" class="chapter">
+          <div class="chapter-header">
+            <h3>{{ chapter.title }}</h3>
+            <div class="chapter-actions" v-if="isTeacher">
+              <el-button type="primary" link @click="editChapter(chapter)">编辑</el-button>
+              <el-button type="danger" link @click="deleteChapter(chapter)">删除</el-button>
+            </div>
           </div>
-          <div class="lesson-progress" v-if="lesson.progress">
-            <el-progress :percentage="lesson.progress" :show-text="false" />
+          <div class="lessons">
+            <div v-for="lesson in chapter.lessons" :key="lesson.id" class="lesson">
+              <div class="lesson-info">
+                <el-icon><VideoPlay v-if="lesson.type === 'video'" /><VideoCamera v-else /></el-icon>
+                <span>{{ lesson.title }}</span>
+                <el-tag size="small" :type="getLessonStatusType(lesson.status)">
+                  {{ getLessonStatusText(lesson.status) }}
+                </el-tag>
+              </div>
+              <div class="lesson-actions">
+                <el-button type="primary" link @click="playLesson(lesson)">
+                  {{ lesson.type === 'video' ? '观看' : '进入直播' }}
+                </el-button>
+                <template v-if="isTeacher">
+                  <el-button type="primary" link @click="editLesson(lesson)">编辑</el-button>
+                  <el-button type="danger" link @click="deleteLesson(lesson)">删除</el-button>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 章节编辑对话框 -->
+    <el-dialog
+      v-model="chapterDialogVisible"
+      :title="editingChapter ? '编辑章节' : '添加章节'"
+      width="500px"
+    >
+      <el-form :model="chapterForm" label-width="80px">
+        <el-form-item label="章节标题">
+          <el-input v-model="chapterForm.title" />
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="chapterForm.order" :min="1" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="chapterDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveChapter">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 课程编辑对话框 -->
+    <el-dialog
+      v-model="courseDialogVisible"
+      title="编辑课程"
+      width="600px"
+    >
+      <el-form :model="courseForm" label-width="80px">
+        <el-form-item label="课程标题">
+          <el-input v-model="courseForm.title" />
+        </el-form-item>
+        <el-form-item label="课程简介">
+          <el-input type="textarea" v-model="courseForm.description" />
+        </el-form-item>
+        <el-form-item label="课程分类">
+          <el-select v-model="courseForm.category">
+            <el-option label="前端开发" value="frontend" />
+            <el-option label="后端开发" value="backend" />
+            <el-option label="移动开发" value="mobile" />
+            <el-option label="人工智能" value="ai" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="难度等级">
+          <el-select v-model="courseForm.level">
+            <el-option label="初级" value="beginner" />
+            <el-option label="中级" value="intermediate" />
+            <el-option label="高级" value="advanced" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="课程封面">
+          <el-upload
+            class="cover-uploader"
+            action="/api/upload"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+          >
+            <img v-if="courseForm.cover" :src="courseForm.cover" class="cover" />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="courseDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveCourse">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { getCourseDetail, getCourseLessons } from '../api/course'
-import { useCourseStore } from '../store/course'
-import VideoPlayer from '../components/VideoPlayer.vue'
-import { useUserStore } from '../store/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { VideoPlay, VideoCamera, Plus } from '@element-plus/icons-vue'
+import {
+  getCourseDetail,
+  getCourseChapters,
+  updateCourse,
+  createChapter as createChapterApi,
+  updateChapter,
+  deleteChapter as deleteChapterApi
+} from '../api/course'
 
 const route = useRoute()
 const router = useRouter()
-const courseStore = useCourseStore()
-const userStore = useUserStore()
-
 const course = ref({})
-const lessons = ref([])
-const currentLesson = ref(null)
-const isPurchased = ref(false)
+const chapters = ref([])
+const isTeacher = ref(false) // 根据用户权限判断
 
-const userToken = computed(() => userStore.token)
+// 章节对话框
+const chapterDialogVisible = ref(false)
+const editingChapter = ref(null)
+const chapterForm = ref({
+  title: '',
+  order: 1
+})
 
+// 课程对话框
+const courseDialogVisible = ref(false)
+const courseForm = ref({
+  title: '',
+  description: '',
+  category: '',
+  level: '',
+  cover: ''
+})
+
+// 获取课程详情
 const loadCourseDetail = async () => {
   try {
-    const res = await getCourseDetail(route.params.id)
-    course.value = res.data
-    courseStore.setCurrentCourse(course.value)
+    const { data } = await getCourseDetail(route.params.id)
+    course.value = data
+    courseForm.value = { ...data }
   } catch (error) {
-    console.error('获取课程详情失败:', error)
     ElMessage.error('获取课程详情失败')
   }
 }
 
-const loadLessons = async () => {
+// 获取章节列表
+const loadChapters = async () => {
   try {
-    const res = await getCourseLessons(route.params.id)
-    lessons.value = res.data
-    if (lessons.value.length > 0) {
-      currentLesson.value = lessons.value[0]
-    }
+    const { data } = await getCourseChapters(route.params.id)
+    chapters.value = data
   } catch (error) {
-    console.error('获取课程章节失败:', error)
-    ElMessage.error('获取课程章节失败')
+    ElMessage.error('获取章节列表失败')
   }
 }
 
-const formatDuration = (seconds) => {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = Math.floor(seconds % 60)
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+// 编辑课程
+const editCourse = () => {
+  courseDialogVisible.value = true
 }
 
+// 保存课程
+const saveCourse = async () => {
+  try {
+    await updateCourse(course.value.id, courseForm.value)
+    ElMessage.success('保存成功')
+    courseDialogVisible.value = false
+    loadCourseDetail()
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
+}
+
+// 创建章节
+const createChapter = () => {
+  editingChapter.value = null
+  chapterForm.value = {
+    title: '',
+    order: chapters.value.length + 1
+  }
+  chapterDialogVisible.value = true
+}
+
+// 编辑章节
+const editChapter = (chapter) => {
+  editingChapter.value = chapter
+  chapterForm.value = { ...chapter }
+  chapterDialogVisible.value = true
+}
+
+// 保存章节
+const saveChapter = async () => {
+  try {
+    if (editingChapter.value) {
+      await updateChapter(course.value.id, editingChapter.value.id, chapterForm.value)
+    } else {
+      await createChapterApi(course.value.id, chapterForm.value)
+    }
+    ElMessage.success('保存成功')
+    chapterDialogVisible.value = false
+    loadChapters()
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
+}
+
+// 删除章节
+const deleteChapter = async (chapter) => {
+  try {
+    await ElMessageBox.confirm('确定要删除该章节吗？')
+    await deleteChapterApi(course.value.id, chapter.id)
+    ElMessage.success('删除成功')
+    loadChapters()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 播放课程
 const playLesson = (lesson) => {
-  currentLesson.value = lesson
-}
-
-const handleTimeUpdate = (time) => {
-  if (currentLesson.value) {
-    const progress = (time / currentLesson.value.duration) * 100
-    currentLesson.value.progress = Math.min(progress, 100)
+  if (lesson.type === 'video') {
+    router.push(`/video/${lesson.id}`)
+  } else {
+    router.push(`/live/${lesson.id}`)
   }
 }
 
-const handleBuy = () => {
-  router.push(`/payment/${course.value.id}`)
-}
-
-const handleStudy = () => {
-  if (lessons.value.length > 0) {
-    currentLesson.value = lessons.value[0]
+// 获取课程状态类型
+const getLessonStatusType = (status) => {
+  const types = {
+    published: 'success',
+    draft: 'info',
+    upcoming: 'warning',
+    live: 'danger',
+    ended: 'info'
   }
+  return types[status] || 'info'
 }
 
-const handleBuyVip = () => {
-  router.push('/vip')
+// 获取课程状态文本
+const getLessonStatusText = (status) => {
+  const texts = {
+    published: '已发布',
+    draft: '草稿',
+    upcoming: '即将开始',
+    live: '直播中',
+    ended: '已结束'
+  }
+  return texts[status] || status
 }
 
-onMounted(async () => {
-  await loadCourseDetail()
-  await loadLessons()
+// 处理封面上传成功
+const handleCoverSuccess = (response) => {
+  courseForm.value.cover = response.url
+}
+
+onMounted(() => {
+  loadCourseDetail()
+  loadChapters()
 })
 </script>
 
 <style scoped>
 .course-detail {
-  padding: 16px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .course-header {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.course-info {
-  flex: 1;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
 }
 
 .course-info h1 {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   font-size: 24px;
 }
 
-.meta {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
-  color: #666;
-}
-
-.teacher {
-  color: #409eff;
-}
-
-.price {
-  color: #f56c6c;
-  font-weight: bold;
-}
-
-.course-cover {
-  width: 200px;
-  height: 120px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.course-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.course-content {
-  display: flex;
-  gap: 20px;
-}
-
-.video-player {
-  flex: 1;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.no-lesson {
-  height: 400px;
+.teacher-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #f5f7fa;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-.lesson-list {
-  width: 300px;
+.course-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.chapters {
   background: #fff;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
-.lesson-item {
-  padding: 12px;
-  cursor: pointer;
-  border-bottom: 1px solid #eee;
+.chapter {
+  margin-bottom: 30px;
 }
 
-.lesson-item:last-child {
-  border-bottom: none;
+.chapter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.lesson-item.active {
-  background: #f0f7ff;
+.chapter-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.lessons {
+  border-left: 2px solid #eee;
+  padding-left: 20px;
+}
+
+.lesson {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
 }
 
 .lesson-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 10px;
 }
 
-.lesson-title {
-  font-size: 14px;
-  color: #333;
+.cover-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 178px;
+  height: 178px;
 }
 
-.lesson-duration {
-  font-size: 12px;
-  color: #999;
+.cover-uploader:hover {
+  border-color: #409eff;
 }
 
-.lesson-progress {
-  height: 4px;
+.cover-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
+  line-height: 178px;
+}
+
+.cover {
+  width: 178px;
+  height: 178px;
+  display: block;
+  object-fit: cover;
 }
 </style> 
