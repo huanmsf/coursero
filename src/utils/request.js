@@ -12,9 +12,10 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const userStore = useUserStore()
-    if (userStore.token) {
-      config.headers['Authorization'] = `Bearer ${userStore.token}`
+    // 在请求发送前获取最新的 token
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
     }
     return config
   },
@@ -39,8 +40,9 @@ service.interceptors.response.use(
 
       // 401: 未登录或 token 过期
       if (res.code === 401) {
-        const userStore = useUserStore()
-        userStore.logoutAction()
+        // 清除本地存储的 token
+        localStorage.removeItem('token')
+        // 跳转到登录页
         router.push('/login')
       }
       return Promise.reject(new Error(res.message || '请求失败'))

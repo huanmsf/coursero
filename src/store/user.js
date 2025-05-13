@@ -15,6 +15,20 @@ export const useUserStore = defineStore('user', () => {
 
   const isLogin = computed(() => !!token.value)
   const isTeacher = computed(() => userInfo.value?.role === 'teacher')
+  const isAdmin = computed(() => userInfo.value?.role === 'admin')
+
+  // 初始化加载用户信息
+  const initUserInfo = async () => {
+    if (token.value && !userInfo.value) {
+      try {
+        await loadUserInfo()
+      } catch (error) {
+        console.error('加载用户信息失败:', error)
+        token.value = ''
+        localStorage.removeItem('token')
+      }
+    }
+  }
 
   // 登录
   const loginAction = async (data) => {
@@ -88,6 +102,8 @@ export const useUserStore = defineStore('user', () => {
     userInfo,
     isLogin,
     isTeacher,
+    isAdmin,
+    initUserInfo,
     loginAction,
     registerAction,
     logoutAction,
@@ -95,4 +111,11 @@ export const useUserStore = defineStore('user', () => {
     updateUserInfoAction,
     changePasswordAction
   }
-}) 
+})
+
+// 导出初始化函数
+export const initUserStore = (app) => {
+  const userStore = useUserStore()
+  userStore.initUserInfo()
+  return userStore
+} 

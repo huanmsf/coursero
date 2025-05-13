@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../store/user'
 import MainLayout from '../layouts/MainLayout.vue'
+import AdminLayout from '../views/admin/layout/AdminLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -71,6 +72,63 @@ const router = createRouter({
       ]
     },
     {
+      path: '/admin',
+      component: AdminLayout,
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          name: 'AdminDashboard',
+          component: () => import('../views/admin/Dashboard.vue')
+        },
+        {
+          path: 'banners',
+          name: 'AdminBanners',
+          component: () => import('../views/admin/Banners.vue')
+        },
+        {
+          path: 'courses',
+          name: 'AdminCourses',
+          component: () => import('../views/admin/Courses.vue')
+        },
+        {
+          path: 'lives',
+          name: 'AdminLives',
+          component: () => import('../views/admin/Lives.vue')
+        },
+        {
+          path: 'users',
+          name: 'AdminUsers',
+          component: () => import('../views/admin/Users.vue')
+        },
+        {
+          path: 'roles',
+          name: 'AdminRoles',
+          component: () => import('../views/admin/Roles.vue')
+        },
+        {
+          path: 'permissions',
+          name: 'AdminPermissions',
+          component: () => import('../views/admin/Permissions.vue')
+        },
+        {
+          path: 'settings',
+          name: 'AdminSettings',
+          component: () => import('../views/admin/Settings.vue')
+        },
+        {
+          path: 'menus',
+          name: 'AdminMenus',
+          component: () => import('../views/admin/Menus.vue')
+        },
+        {
+          path: 'logs',
+          name: 'AdminLogs',
+          component: () => import('../views/admin/Logs.vue')
+        }
+      ]
+    },
+    {
       path: '/login',
       name: 'Login',
       component: () => import('../views/Login.vue')
@@ -89,14 +147,37 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   
-  if (to.meta.requiresAuth && !userStore.isLogin) {
-    next('/login')
-  } else {
-    next()
+  // 如果路由需要认证
+  if (to.meta.requiresAuth) {
+    // 如果未登录，跳转到登录页
+    if (!userStore.isLogin) {
+      next('/login')
+      return
+    }
+    
+    // 如果已登录但未加载用户信息，先加载用户信息
+    if (!userStore.userInfo) {
+      try {
+        await userStore.loadUserInfo()
+      } catch (error) {
+        console.error('加载用户信息失败:', error)
+        userStore.logoutAction()
+        next('/login')
+        return
+      }
+    }
+    
+    // 检查管理员权限
+    if (to.meta.requiresAdmin && !userStore.isAdmin) {
+      next('/')
+      return
+    }
   }
+  
+  next()
 })
 
 export default router 
