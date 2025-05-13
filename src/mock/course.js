@@ -72,7 +72,7 @@ const chapters = [
         title: 'Vue.js 3.0 介绍',
         type: 'video',
         duration: 1800,
-        videoUrl: 'https://example.com/video1.mp4',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
         status: 'published'
       },
       {
@@ -80,7 +80,8 @@ const chapters = [
         title: 'Vue.js 3.0 直播课',
         type: 'live',
         startTime: '2024-01-20 20:00:00',
-        status: 'upcoming'
+        status: 'upcoming',
+        recordUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
       }
     ]
   },
@@ -95,7 +96,7 @@ const chapters = [
         title: 'React Hooks 详解',
         type: 'video',
         duration: 2400,
-        videoUrl: 'https://example.com/video2.mp4',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
         status: 'published'
       },
       {
@@ -103,7 +104,7 @@ const chapters = [
         title: 'React 状态管理',
         type: 'video',
         duration: 3600,
-        videoUrl: 'https://example.com/video3.mp4',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
         status: 'published'
       }
     ]
@@ -119,7 +120,7 @@ const chapters = [
         title: 'Node.js 环境搭建',
         type: 'video',
         duration: 1200,
-        videoUrl: 'https://example.com/video4.mp4',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
         status: 'published'
       },
       {
@@ -127,7 +128,7 @@ const chapters = [
         title: 'Express 框架入门',
         type: 'video',
         duration: 1800,
-        videoUrl: 'https://example.com/video5.mp4',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
         status: 'published'
       }
     ]

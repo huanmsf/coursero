@@ -39,11 +39,11 @@
               <div class="course-meta">
                 <span class="teacher">
                   <el-icon><User /></el-icon>
-                  {{ course.teacher }}
+                  {{ course.teacher.name }}
                 </span>
                 <span class="students">
                   <el-icon><UserFilled /></el-icon>
-                  {{ course.students }}人学习
+                  {{ course.studentCount }}人学习
                 </span>
               </div>
               <div class="course-price">

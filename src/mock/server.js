@@ -87,20 +87,30 @@ app.get('/api/courses/:id/chapters', (req, res) => {
 
 // 获取课程详情
 app.get('/api/lessons/:id', (req, res) => {
-  const { id } = req.params
-  const lesson = chapters.reduce((found, chapter) => {
-    if (found) return found
-    return chapter.lessons.find(lesson => lesson.id === parseInt(id))
-  }, null)
+  const lessonId = parseInt(req.params.id)
+  let lesson = null
+  
+  // 遍历所有章节查找课程
+  for (const chapter of chapters) {
+    const found = chapter.lessons.find(l => l.id === lessonId)
+    if (found) {
+      lesson = found
+      break
+    }
+  }
 
   if (lesson) {
+    // 如果是视频课程，确保返回可播放的 URL
+    if (lesson.type === 'video') {
+      lesson.videoUrl = 'https://media.w3.org/2010/05/sintel/trailer.mp4'
+    }
+    // 如果是直播课程，确保返回可播放的回放 URL
+    if (lesson.type === 'live' && lesson.status === 'ended') {
+      lesson.recordUrl = 'https://media.w3.org/2010/05/sintel/trailer.mp4'
+    }
     res.json({
       code: 200,
-      data: {
-        ...lesson,
-        description: '这是课程描述',
-        viewCount: Math.floor(Math.random() * 1000)
-      }
+      data: lesson
     })
   } else {
     res.status(404).json({

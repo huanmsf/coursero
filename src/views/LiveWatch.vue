@@ -61,6 +61,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, View, Timer, VideoPlay } from '@element-plus/icons-vue'
 import { getLiveDetail, getLivePullUrl, getLiveMessages, sendLiveMessage, getLiveStream } from '../api/live'
+import Hls from 'hls.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,10 +73,9 @@ const viewerCount = ref(0)
 const liveDuration = ref(0)
 const messages = ref([])
 const isPlaying = ref(false)
-let peerConnection = null
+let hls = null
 let messagesTimer = null
 let durationTimer = null
-let mediaStream = null
 
 // 加载直播信息
 const loadLiveDetail = async () => {
@@ -100,24 +100,59 @@ const loadLiveStream = async () => {
         throw new Error('视频元素未找到')
       }
       
-      // 使用示例视频流
       const streamUrl = res.data.stream.streamUrl
       if (!streamUrl) {
         throw new Error('直播流地址无效')
       }
 
-      // 设置视频源
-      videoElement.src = streamUrl
-      
-      // 添加错误处理
-      videoElement.onerror = (e) => {
-        console.error('视频加载错误:', e)
-        ElMessage.error('视频加载失败，请检查网络连接')
-      }
-
-      // 添加加载处理
-      videoElement.onloadeddata = () => {
-        console.log('视频数据已加载')
+      // 使用 HLS.js 播放视频
+      if (Hls.isSupported()) {
+        if (hls) {
+          hls.destroy()
+        }
+        hls = new Hls({
+          debug: false,
+          enableWorker: true,
+          lowLatencyMode: true,
+        })
+        hls.loadSource(streamUrl)
+        hls.attachMedia(videoElement)
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          videoElement.play().catch(error => {
+            console.error('播放失败:', error)
+            ElMessage.error('视频播放失败，请重试')
+          })
+        })
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.error('网络错误，尝试恢复...')
+                hls.startLoad()
+                break
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.error('媒体错误，尝试恢复...')
+                hls.recoverMediaError()
+                break
+              default:
+                console.error('无法恢复的错误:', data)
+                hls.destroy()
+                ElMessage.error('视频播放失败，请重试')
+                break
+            }
+          }
+        })
+      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        // 对于原生支持 HLS 的浏览器（如 Safari）
+        videoElement.src = streamUrl
+        videoElement.addEventListener('loadedmetadata', () => {
+          videoElement.play().catch(error => {
+            console.error('播放失败:', error)
+            ElMessage.error('视频播放失败，请重试')
+          })
+        })
+      } else {
+        throw new Error('您的浏览器不支持 HLS 视频播放')
       }
     } else {
       throw new Error(res.message || '获取直播流失败')
@@ -198,39 +233,29 @@ const stopDurationTimer = () => {
 // 开始播放
 const startPlay = async () => {
   try {
-    const videoElement = videoRef.value
-    if (!videoElement) {
-      throw new Error('视频元素未找到')
-    }
-
-    if (!videoElement.src) {
-      throw new Error('视频源未加载')
-    }
-    
-    await videoElement.play()
+    await loadLiveStream()
     isPlaying.value = true
     startDurationTimer()
   } catch (error) {
-    console.error('播放失败:', error)
-    ElMessage.error('视频播放失败，请重试')
+    console.error('开始播放失败:', error)
+    ElMessage.error('开始播放失败，请重试')
   }
 }
 
 onMounted(() => {
   loadLiveDetail()
-  loadLiveStream()
   loadMessages()
   simulateViewerCount()
 })
 
 onUnmounted(() => {
+  if (hls) {
+    hls.destroy()
+    hls = null
+  }
   stopDurationTimer()
   if (messagesTimer) {
     clearInterval(messagesTimer)
-  }
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop())
-    mediaStream = null
   }
 })
 </script>

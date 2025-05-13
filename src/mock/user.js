@@ -1,15 +1,40 @@
+// 默认头像
+const DEFAULT_AVATAR = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+
 // 模拟用户数据
 const users = [
   {
     id: 1,
-    username: 'test',
+    username: 'admin',
     password: '123456',
-    email: 'test@example.com',
+    nickname: '管理员',
+    avatar: DEFAULT_AVATAR,
+    role: 'admin',
+    email: 'admin@example.com',
     phone: '13800138000',
-    avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-    role: 'user',
-    bio: '这是一个测试账号',
-    isVip: false
+    status: 'active'
+  },
+  {
+    id: 2,
+    username: 'teacher',
+    password: '123456',
+    nickname: '张老师',
+    avatar: DEFAULT_AVATAR,
+    role: 'teacher',
+    email: 'teacher@example.com',
+    phone: '13800138001',
+    status: 'active'
+  },
+  {
+    id: 3,
+    username: 'student',
+    password: '123456',
+    nickname: '李同学',
+    avatar: DEFAULT_AVATAR,
+    role: 'student',
+    email: 'student@example.com',
+    phone: '13800138002',
+    status: 'active'
   }
 ]
 
@@ -215,5 +240,20 @@ export const getUserLearningHistory = (userId) => {
   return {
     code: 200,
     data: learningHistory
+  }
+}
+
+// 创建用户
+export const createUser = (data) => {
+  const newUser = {
+    id: users.length + 1,
+    ...data,
+    avatar: data.avatar || DEFAULT_AVATAR,
+    status: 'active'
+  }
+  users.push(newUser)
+  return {
+    code: 200,
+    data: newUser
   }
 } 
