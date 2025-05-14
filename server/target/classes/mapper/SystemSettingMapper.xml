@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.education.mapper.SystemSettingMapper">
+
+    <resultMap id="SystemSettingMap" type="com.education.entity.SystemSetting">
+        <id property="id" column="id"/>
+        <result property="settingKey" column="setting_key"/>
+        <result property="settingValue" column="setting_value"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectBySettingKey" resultMap="SystemSettingMap">
+        SELECT * FROM system_setting WHERE setting_key = #{settingKey}
+    </select>
+
+    <select id="selectById" resultMap="SystemSettingMap">
+        SELECT * FROM system_setting WHERE id = #{id}
+    </select>
+
+    <select id="selectPage" resultMap="SystemSettingMap">
+        SELECT * FROM system_setting
+        <where>
+            <if test="settingKey != null and settingKey != ''">
+                AND setting_key LIKE CONCAT('%', #{settingKey}, '%')
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <insert id="insert" parameterType="com.education.entity.SystemSetting" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO system_setting (setting_key, setting_value, description, created_at, updated_at)
+        VALUES (#{settingKey}, #{settingValue}, #{description}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="updateById" parameterType="com.education.entity.SystemSetting">
+        UPDATE system_setting
+        SET
+            setting_key = #{settingKey},
+            setting_value = #{settingValue},
+            description = #{description},
+            created_at = #{createdAt},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        DELETE FROM system_setting WHERE id = #{id}
+    </update>
+
+</mapper> 

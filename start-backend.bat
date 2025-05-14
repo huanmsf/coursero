@@ -1,0 +1,9 @@
+@echo off
+echo 正在启动后端项目...
+
+cd server
+echo 编译项目...
+call mvn clean package -DskipTests
+
+echo 启动应用...
+call java -jar target/education-0.0.1-SNAPSHOT.jar 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.education.mapper.BannerMapper">
+
+    <resultMap id="BannerMap" type="com.education.entity.Banner">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="linkUrl" column="link_url"/>
+        <result property="sort" column="sort"/>
+        <result property="status" column="status"/>
+        <result property="deleted" column="deleted"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectEnabledBanners" resultMap="BannerMap">
+        SELECT * FROM banner WHERE status = 1 AND deleted = 0 ORDER BY sort ASC
+    </select>
+
+    <select id="selectById" resultMap="BannerMap">
+        SELECT * FROM banner WHERE id = #{id}
+    </select>
+
+    <select id="selectPage" resultMap="BannerMap">
+        SELECT * FROM banner
+        <where>
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+        </where>
+        ORDER BY sort ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <insert id="insert" parameterType="com.education.entity.Banner" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO banner (title, image_url, link_url, sort, status, deleted, created_at, updated_at)
+        VALUES (#{title}, #{imageUrl}, #{linkUrl}, #{sort}, #{status}, #{deleted}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="updateById" parameterType="com.education.entity.Banner">
+        UPDATE banner
+        SET
+            title = #{title},
+            image_url = #{imageUrl},
+            link_url = #{linkUrl},
+            sort = #{sort},
+            status = #{status},
+            deleted = #{deleted},
+            created_at = #{createdAt},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE banner SET deleted = 1 WHERE id = #{id}
+    </update>
+
+</mapper> 
